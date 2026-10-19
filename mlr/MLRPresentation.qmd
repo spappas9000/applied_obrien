@@ -1,0 +1,267 @@
+---
+title: "Multiple Linear Regression"
+author: "Steven Pappas"
+date: "today"
+format: beamer
+editor: visual
+execute:
+  warning: false
+  message: false
+  echo: true
+  include: true
+resource_files:
+- MLRPresentation.pdf
+---
+
+```{r, echo=FALSE}
+library(ISLR)
+library(car)
+
+library(rsconnect)
+deployDoc("~/Downloads/MLRPresentation.qmd")
+```
+
+# Introduction
+
+- Think about **multiple linear regression** (MLR) as an extension of **simple linear regression** (SLR)
+
+  - SLR concepts largely stay the same but with more predictors and slightly different interpretations
+
+- For this demo, I will use the $\texttt{Hitters}$ data set stored in the $\texttt{ISLR}$ package
+
+  - Contains Major League Baseball (MLB) data from the 1986 and 1987 seasons
+
+# Overview
+
+- **Multiple Linear Regression** (MLR): Understanding the linear relationship between a response/dependent variable $Y$ using *multiple* $X$ variables
+
+  - How do hours studied ($X_1$) and hours slept ($X_2$) linearly explain an exam grade ($Y$)?
+
+  - How do square footage ($X_1$) and number of bedrooms ($X_2$) linearly explain a house price ($Y$)?
+
+# Applying MLR to $\texttt{Hitters}$ Model
+
+- **SLR Model**: The linear relationship between a player's salary in thousands of USD ($Y$) in the 1987 season by their hits ($X$) in the 1986 season
+
+$$Y = \beta_0 + \beta_1 X + \epsilon \text{, where } \epsilon \text{ is the error in our prediction}$$
+
+- **MLR Model**: The linear relationship between a player's salary in thousands of USD ($Y$) in the 1987 season by their hits ($X_1$) in the 1986 season and years of MLB experience ($X_2$)
+
+$$Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \epsilon \text{, where } \epsilon \text{ is the error in our prediction}$$
+
+# SLR Plot
+
+```{r}
+plot(Salary ~ Hits, Hitters)
+abline(lm(Salary ~ Hits, Hitters), col = "blue", lwd = 2)
+```
+
+# MLR Plot
+
+![Plotly Figure](~/Downloads/plotly.jpeg)
+
+# SLR Summary Table
+
+\scriptsize
+
+```{r}
+summary(lm(Salary ~ Hits, Hitters))
+```
+
+- Note: (Intercept) ($\hat{\beta_0}$) does not have any stars next to it
+
+# Coefficients
+
+- **Estimate** ($\hat{\beta}$): The change in $Y$ given a one-unit change in $X$
+
+- **Std. Error** ($SE$): The portion of the error in the model's predicted/fitted values ($\hat{Y}$) from their respective actual values ($Y$) attributed to $X$
+
+- **t value** ($t$): The size of the estimate ($\hat{\beta}$) relative to the standard error ($SE$)
+
+- **Pr(\>\|t\|)** ($p$): The probability of observing values more extreme than in our data set ($t$)
+
+  - Compared to a baseline alpha ($\alpha$) value, often 0.05
+
+  - Used in **hypothesis testing** (next slide!)
+
+# Hypothesis Testing
+
+- **Hypothesis Test**: A test to determine whether we have *sufficient evidence* for an estimate ($\hat{\beta}$) being non-zero
+
+  - The **null hypothesis** ($H_0$) states there is *no difference* between $\hat{\beta}$ and 0
+
+    - $\hat{\beta}$ = 0
+
+  - The **alternative hypothesis** ($H_A$) states there is *a difference* between $\hat{\beta}$ and 0
+
+    - $\hat{\beta}$ $\ne$ 0
+
+- If $p$ $\geq$ $\alpha$, you would *fail to reject* $H_0$ and say $\hat{\beta}$ is *not significant*
+
+- If $p$ \< $\alpha$, you would *reject* $H_0$ and say $\hat{\beta}$ is *significant*
+
+- Significance is denoted by Signif. codes in the summary table
+
+# R-Squared ($R^2$)
+
+- The percentage of variance in $Y$ explained by the model
+
+  - In our case, it is the percentage of variance in $Y$ explained by $X_1$ and $X_2$
+
+- Shorthand name for the *coefficient of determination*
+
+  - Calculated by squaring the *Pearson correlation coefficient* ($r$)
+
+- $R^2$ can never decrease as you add more $X$ predictor variables
+
+  - The *adjusted* $R^2$ adjusts accordingly, shrinking the *multiple* $R^2$ by the number of predictors
+
+# F-statistic ($F$) & p-value ($p$)
+
+- The F-statistic ($F$) tests whether at least one $X$ is significant in the model
+
+  - 62.19 on 1 and 261 DF
+
+    - $F$ = 62.19
+
+    - 1 *model* degree of freedom ($k$) is the number of $X$ predictors
+
+    - 261 *residual* degrees of freedom ($n - (k + 1)$) is the difference in observed values $n$ and model parameters
+
+- The p-value ($p$) follows the same setup as above but with a different hypothesis test
+
+  - $H_0$: Every $\hat{\beta}$ = 0
+
+  - $H_A$: Any $\hat{\beta}$ $\neq$ 0
+
+  - $p$ = 8.531e$^{-14}$ \< $\alpha$ = 0.05, so we *reject* $H_0$
+
+    - At least one $\hat{\beta}$ $\neq$ 0
+
+# MLR Summary Table
+
+\scriptsize
+
+```{r}
+summary(lm(Salary ~ Hits + Years, Hitters))
+```
+
+- Every predictor variable is significant!
+
+# Interpreting Linear Relationships
+
+- Intercept: $\hat{\beta_0}$ = -199.25
+
+  - We expect a player's 1987 salary in thousands of USD ($Y$) to be -199.25 with no years of experience and no hits during the 1986 season
+
+- Hits: $\hat{\beta_1}$ = 4.31
+
+  - We expect a player's 1987 salary in thousands of USD ($Y$) to increase by 4.31 for a one-unit increase in their number of hits during the 1986 season, holding years of experience constant.
+
+- Years: $\hat{\beta_2}$ = 36.95
+
+  - We expect a player's 1987 salary in thousands of USD ($Y$) to increase by 36.95 for a one-unit increase in years of experience, holding hits during the 1986 season constant.
+
+# Confidence Intervals
+
+- Let's look at the Hits predictor ($X_1$)
+
+- To derive a confidence interval, use the $\texttt{confint()}$ function in the $\texttt{stats}$ package
+
+- We are 95% confident that the true increase in player salary in the 1987 season in thousands of USD ($Y$) is between 3.33 and 5.3 for a one-unit increase in hits during the 1986 season.
+
+\scriptsize
+
+```{r}
+confint(lm(Salary ~ Hits + Years, Hitters), "Hits", level = 0.95) # 95% CI
+```
+
+# Linear Regression Checks
+
+- **Assumption of Normality**: $Y$ remains *normally distributed* across fixed values of $X_1$, $X_2$
+
+- **Assumption of Homoscedasticity**: The variance of $Y$ is *randomly scattered about zero* for different values of $X_1$, $X_2$
+
+- **Limiting Multicollinearity**: $X_1$, $X_2$ should not be correlated with each other, as it diminishes one's ability to interpret a model
+
+# Checking the Normality Assumption
+
+\scriptsize
+
+```{r}
+plot(lm(Salary ~ Hits + Years, Hitters), 2) # Quantile-Quantile (QQ) Plot
+```
+
+# Checking the Normality Assumption
+
+- The points on the QQ Plot appear to *deviate from* the 45-degree reference line as the theoretical quantiles increase. Therefore, the assumption of normally distributed residuals *is* violated.
+
+- The residuals deviating from the 45-degree reference line as the theoretical quantiles increase indicates a *right-skew*, which can be fixed by applying a *logarithmic* transformation
+
+# Fixing Violations in the Normality Assumption
+
+\scriptsize
+
+```{r}
+plot(lm(log(Salary) ~ Hits + Years, Hitters), 2) # Quantile-Quantile (QQ) Plot
+```
+
+# Checking the Homoscedastic Assumption
+
+\scriptsize
+
+```{r}
+plot(lm(log(Salary) ~ Hits + Years, Hitters), 1) # Residual Plot
+```
+
+# Checking the Homoscedastic Assumption
+
+- The residuals display a parabolic trend, signaling that the residuals are not *randomly scattered about zero*. Therefore, the assumption of homoscedasticity *is* violated.
+
+- A distinct parabolic trend indicates a *non-linear* relationship within the data, which can be fixed by applying a square transformation to one or more predictors
+
+# Fixing Violations in the Homoscedastic Assumption
+
+\scriptsize
+
+```{r}
+plot(lm(log(Salary) ~ Hits + I(Years^2) + Years, Hitters), 1) # Residual Plot
+```
+
+# Checking for Multicollinearity
+
+- The **variance inflation factor** (VIF) checks multicollinearity
+
+  - Values around 1-5 are good, 5-10 indicates mild multicollinearity, and 10+ is problematic
+
+- In our case, since the squared term is a function of the non-squared term, the VIF appears problematic when it's not
+
+\scriptsize
+
+```{r}
+library(car)
+vif(lm(log(Salary) ~ Hits + I(Years^2) + Years, Hitters))
+vif(lm(log(Salary) ~ Hits + Years, Hitters))
+```
+
+# Making Predictions
+
+- You can use an MLR model to evaluate linear relationships and make predictions ($\hat{Y}$) about the response $Y$
+
+- Use the $\texttt{predict()}$ function in the $\texttt{stats}$ package to store these predictions as a vector
+
+```{r}
+mod <- lm(log(Salary) ~ Hits + I(Years^2) + Years, Hitters)
+pred <- exp(predict(mod, newdata = Hitters))
+sort(pred, decreasing = T)[1:3]
+```
+
+# Other Relevant Information
+
+- **Analysis of Variance (ANOVA)**: Tests whether adding a predictor variable *significantly* improves the model
+
+- **Variable Selection**: Procedures that describe testing for the best combination of predictor variables in model accuracy
+
+  - Stepwise regression adds and/or removes features that lead to improvement in accuracy
+
+  - Least absolute shrinkage and selection operator (LASSO) regression adds a penality that performs variable selection and prevents overfitting
