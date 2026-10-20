@@ -1,0 +1,370 @@
+---
+title: "Overview of Predictive Analytics"
+author: "Steven Pappas"
+date: "2026-10-19"
+subtitle: "Introduction to Applied Statistics Using R (STAT 401)"
+format: pdf
+editor: visual
+execute:
+  warning: false
+  message: false
+  echo: true
+  include: true
+header-includes:
+  - \usepackage{indentfirst}
+  - \setlength{\parindent}{3em}
+  - \setlength{\parskip}{0em}
+---
+
+# Introduction
+
+In statistics, regression analysis is critical in evaluating intervariate relationships with sets of data. At its most basic, regression takes two grouped variables, an independent ($x$) and dependent ($y$) variable, and finds a linear line of best fit between them. From there, we can quantify this line's properties, the error in plotted data from the line, and the probability of observing such an error in repeated samples. This regression analysis can be expanded to include more independent variables and non-linear lines of best fit.
+
+Regression analysis has broad inferential applications. A regression model always provides a coefficient ($\hat{\beta}$) that can linearly explain a relationship between an independent and dependent variable. Thus, regardless of the fit's linearity, one can always interpret its shape, strength, and significance in a linear context. Furthermore, they can use the coefficient's properties to compare fits between models of different sizes.
+
+To accurately assess a linear regression model, assumptions are paramount. There must be a reasonable degree of normality and independence within the data, and error from the model's predictions should be randomly scattered about zero. Meeting these assumptions validate model interpretations and predictions. They are especially important for a framework that relies on strict mathematical frameworks.
+
+Regression analysis has remarkable power and versatility for its simplicity, but statisticians are not limited to its rigid frameworks. Predictive methods expand on concepts in regression with a pure focus on repeated predictive accuracy, defined as minimizing a model's loss function or predicted error. This shifted focus encourages more flexibility in linear regression's assumptions, allowing them to be violated if they increase predictive success.
+
+While predictive modeling shifts the rules of linear regression, it requires strong tenets to ensure repeated predictive success. In this paper, I will introduce the foundations of predictive modeling, outline the process of various predictive models, and apply each model to a case study.
+
+# Preparing a Predictive Model
+
+Predictive modeling works around supervised and unsupervised statistical learning. Unsupervised learning looks for groupings between a set of variables $p$ without a defined $y$. Popular forms of unsupervised learning include principal component analysis (PCA) and clustering. These analyses simplify data by grouping observations with similar characteristics to shrink a large $p$, a concept called dimension reduction. Dimension reduction eyes the sweet spot between the data's variance and simplicity, a common trend in predictive models. Since unsupervised methods lack $y$, and thus can't minimize predictive error, they often feed into supervised methods that work with high-dimensional data.
+
+Supervised learning aligns with traditional regression models, which seek to explain variation in $y$ with a set of predictor variables $p$. Oftentimes, unsupervised techniques are valuable parts of the predictor set, since predictive models often deal with high-dimensional data. Predictive models modify this approach to include significantly more flexibility, accommodate series of non-linear relationships, and/or learn off multiple iterations of model fits.
+
+Predictive modeling balances its loose rules with the bias-variance trade-off. Bias refers to the data's ability to explain $y$, where low bias describes a strong fit and vice versa. Variance refers to the data's ability to reproduce its relationship with $y$ in repeated samples, where low variance describes consistent replication and vice versa. Oftentimes, these concepts are inversely dependent. For instance, models that fit very well to their given data often perform worse with new samples. The trade-off suggests a local minimum in predictive error that reaches the optimal balance between bias and variance.
+
+Predictive models can test repeated success using internal splits in already-existing data, an idea called cross-validation. Cross-validation involves building on a model on a large subset of the total data, known as the training set, and checking the performance of that model on a smaller subset, known as the testing set. This ensures that the model can perform well on data it has not yet observed.
+
+Cross-validation takes three forms: the validation set approach, $k$-fold cross-validation, and leave-one-out cross-validation (LOOCV). The validation set approach creates one training and testing split, retaining simplicity but making its performance hinder on a strong random split. $k$-fold cross-validation creates $k$ training and testing splits, where the $k$th split is the testing set and the remaining $n-k$ splits are the training sets. This approach retains some simplicity while multiple splits better assures repeated predictive success. LOOCV is a type of $k$-fold cross-validation where the model is tested on an $i$th observation and trained on the remaining $n-i$ data. The number of splits required for LOOCV is often computationally intensive but assures air-tight model validation.
+
+To apply these predictive concepts, I created multiple models predicting the median value of housing prices ($y$) in Boston (all code in appendix). I will use ridge, lasso, random forest, and gradient boosted models. All models will be evaluated on the mean-squared error of the predictions and valided using $k$-fold cross-validation, where $k = 5$.
+
+# Applying Predictive Models Using \texttt{Boston} Data
+
+We will start this data analysis using a multiple linear regression model, as linear regression is often a good baseline for more flexible predictive models. In this regression model, the relationship between the predictor set $p$ and $y$ takes a linear fit, with no variables excluded. In this model, the mean-squared error was 24.2, meaning our model has a mean prediction error of 24.2 squared thousands of dollars. The interpretation sounds wonky, but this value is critical in determining whether we want to stick with a linear model or apply a more complex predictive model.
+
+Our first predictive models will be ridge and lasso models. Each model performs coefficient ($\hat{\beta}$) shrinkage using a penalty term that's added onto the residual error. To ensure the penalty doesn't bias predictors by size, each predictor should be standardized. The ridge model uses a squared penalty that shrinks the set of $\hat{\beta}$ towards zero but never exactly there. The lasso model uses an absolute value penalty that can shrink the set of $\hat{\beta}$ to zero, allowing the model to remove variables that don't reduce predictive error. These models can be combined, where the penalty is between ridge's squared and lasso's absolute value, into a model called the elastic net. For the sake of this paper, we will only use the ridge and lasso models.
+
+The ridge and lasso models have mean-squared errors of 26.9 and 26.2, respectively. Despite the penalty terms that seek to reign in noisy coefficients, both models have worse predictive accuracy than the simpler linear regression model. Instead of trying to mold models within a linear regression framework, we will try tree-based methods in random forest and gradient-boosted models.
+
+Tree-based models grow from the top-down, like an inverted tree. They start at a root node, which makes a split in a variable based on its relationship with $y$. Subsequent splits are denoted as decision nodes before a model coefficient is produced as a terminal node. These models are incredibly flexible, creating a vast number of conditional coefficients $\hat{\beta}$.
+
+A random forest model is a tree-based method that trains and averages multiple models from independent subsets of the data. Each of these trained models reduces its dimensions to decorrelate each tree and ensure reasonable variance. The $\texttt{randomForest}()$ package in the eponymous package reports coefficients as its variance reduction across each split. A higher coefficient value means the variable reduces more predictive error and vice versa. The random forest model reports a much-improved mean-squared error of 11.5, making it a strong predictive improvement over the linear regression model.
+
+A gradient-boosted model uses tree-based methods to learn iteratively. From the original data, it trains a single tree-based model, uses that model to make predictions on the original data, and trains subsequent models to predict the predictive error. This cycle ends when its predictive performance ceases to improve. The $\texttt{gbm}()$ package in the eponymous package reports a gradient boosted model's coefficients as relative influence. Relative influence measures the amount of predictive error reduced in the model's iterations by each predictor variable. The gradient-boosted model performed the best of the five models, with a mean-squared error of 7.7. Therefore, if we were picking a predictive model of these five to use for this data, we would pick the gradient-boosted model.
+
+# Conclusion
+
+In this paper, I discussed the importance of regression analysis in inferential statistics, illustrating the importance of being able to interpret statistical relationships and the rules they must follow. I then applied the importance of regression to predictive models, discussing the ways they loosen linear regression's rigidity to ensure repeated predictive success. Additionally, I discussed tenets of predictive models like cross-validation and the bias-variance trade-off that must be considered before any analysis. Finally, I applied all these ideas to real-world data, introducing various predictive models and evaluating their predictive success in comparison to a linear model.
+
+Predictive modeling extends the capabilities of regression analysis to make accurate predictions with complex data sets. These situations often reflect real-world examples, where high-dimensional, messy, and correlated data is more common. In these cases, it's critical to have flexible methods that can adjust to any case study.
+
+# Appendix
+
+```{r}
+library(caret) # For creating training and testing splits
+
+library(boot) # For leave-one-out cross-validation
+
+library(tidyverse) # For general data manipulation
+
+library(glmnet) # For ridge and lasso regression
+
+library(randomForest) # For random forest models
+
+library(gbm) # For gradient boosted models
+
+boston <- read.csv("predictive/boston.csv") %>% # Look this data set up on Kaggle under 'Boston Housing'
+  na.omit()
+
+penguins <- penguins %>% # Data set should be in base R :)
+  na.omit() %>%
+  mutate(female = ifelse(sex == "female", 1, 0))
+
+## Validation-set approach
+
+set.seed(1989) # For reproducability
+
+train_index <- createDataPartition(y = boston$MEDV, p = 0.8, list = F)
+
+nrow(boston[train_index,])/nrow(boston) # Percentage in training set
+
+nrow(boston[-train_index,])/nrow(boston) # Percentage in testing set
+
+## Leave-one-out cross-validation
+
+set.seed(1989) # For reproducability
+
+mod <- glm(female ~ bill_len + bill_dep + flipper_len + body_mass, 
+           data = penguins, 
+           family = "binomial")
+
+loocv <- cv.glm(data = penguins, glmfit = mod)
+
+loocv$delta[2] # Bias-adjusted mean squared error
+
+## k-fold cross-validation
+
+set.seed(1989) # For reproducability
+folds <- createFolds(penguins$female, k = 5, list = T, returnTrain = T)
+fold_MSE <- numeric(5) # Dummy vector to store mean squared error
+
+for (i in 1:5) {
+  train_indices <- folds[[i]] # Each fold is a new training-testing run
+  
+  train_data <- penguins[train_indices, ]
+  test_data <- penguins[-train_indices, ]
+  
+  mod <- glm(female ~ bill_len + bill_dep + flipper_len + body_mass, 
+             data = train_data, 
+             family = "binomial")
+  
+  pred <- data.frame(test_data, 
+                     female_hat = predict(mod, test_data, type = "response"))
+  
+  fold_MSE[i] <- mean((pred$female - pred$female_hat)^2)
+}
+
+mean(fold_MSE) # Very similar to LOOCV!
+
+## Creating and testing a generalized linear model with Boston data
+
+set.seed(1989)
+
+folds <- createFolds(boston$MEDV, k = 5, list = T, returnTrain = T) # Creating k = 5 folds
+
+glm_results <- tibble( # Dummy data
+  fold = 1:5,
+  coef = vector("list", 5),
+  mse = NA_real_
+)
+
+for (i in 1:5) {
+  
+  train_indices <- folds[[i]]
+  
+  train <- boston[train_indices, ]
+  test <- boston[-train_indices, ]
+  
+  mod <- lm(
+    MEDV ~ ., 
+    train
+  )
+  
+  dfpred_lm <- data.frame( # Making predictions from training and testing data
+    test, 
+    pred = predict(mod, newdata = test)
+  )
+  
+  glm_results$coef[[i]] <- as_tibble(coef(mod), rownames = "var") # Inputting coefficients to dummy data
+  glm_results$mse[[i]] <- mean((dfpred_lm$MEDV - dfpred_lm$pred)^2) # Inputting MSE to dummy data
+  
+}
+
+glm_results$coef %>% # Averaging beta coefficients in each fold
+  bind_rows(.id = "fold") %>%
+  group_by(var) %>%
+  summarize(value = round(mean(value), 1)) %>%
+  pull(var, value)
+
+cat("Generalized linear model MSE:", mean(glm_results$mse)) # MSE
+
+## Creating and testing a ridge regression model with Boston data
+
+set.seed(1989)
+
+ridge_results <- tibble(
+  fold = 1:5,
+  coef = vector("list", 5),
+  mse = NA_real_
+)
+
+for (i in 1:5) {
+  
+  train_indices <- folds[[i]]
+  
+  train <- boston[train_indices, ]
+  test <- boston[-train_indices, ]
+  
+  x_train <- as.matrix(train[, -14])
+  y_train <- train[, 14]
+  
+  x_test <- as.matrix(test[, -14])
+  y_test <- test[, 14]
+  
+  cv_ridge <- cv.glmnet(
+    x = x_train,
+    y = y_train,
+    family = "gaussian",
+    alpha = 0
+  )
+  
+  final_ridge <- glmnet(
+    x = x_train,
+    y = y_train,
+    family = "gaussian",
+    alpha = 0,
+    lambda = cv_ridge$lambda.1se
+  )
+  
+  dfpred_ridge <- data.frame(
+    x_test, 
+    pred = predict(
+      final_ridge, 
+      newx = x_test
+    )
+  )
+  
+  ridge_results$coef[[i]] <- as.matrix(coef(final_ridge), rownames = "var")
+  ridge_results$mse[[i]] <- mean((y_test - dfpred_ridge$s0)^2)
+  
+}
+
+round(rowMeans(do.call(cbind, ridge_results$coef)), 1) # Standardized model coefficients
+
+cat("Ridge Regression MSE:", round(mean(ridge_results$mse), 1))
+
+## Creating and testing a lasso regression model using Boston data
+
+set.seed(1989)
+
+lasso_results <- tibble(
+  fold = 1:5,
+  coef = vector("list", 5),
+  mse = NA_real_
+)
+
+for (i in 1:5) {
+  
+  train_indices <- folds[[i]]
+  
+  train <- boston[train_indices, ]
+  test <- boston[-train_indices, ]
+  
+  x_train <- as.matrix(train[, -14])
+  y_train <- train[, 14]
+  
+  x_test <- as.matrix(test[, -14])
+  y_test <- test[, 14]
+  
+  cv_lasso <- cv.glmnet(
+    x = x_train,
+    y = y_train,
+    family = "gaussian",
+    alpha = 1
+  )
+  
+  final_lasso <- glmnet(
+    x = x_train,
+    y = y_train,
+    family = "gaussian",
+    alpha = 1,
+    lambda = cv_ridge$lambda.1se
+  )
+  
+  dfpred_lasso <- data.frame(
+    x_test, 
+    pred = predict(
+      final_ridge, 
+      newx = x_test
+    )
+  )
+  
+  lasso_results$coef[[i]] <- as.matrix(coef(final_lasso), rownames = "var")
+  lasso_results$mse[[i]] <- mean((y_test - dfpred_lasso$s0)^2)
+  
+}
+
+round(rowMeans(do.call(cbind, lasso_results$coef)), 1) # Standardized odel coefficients
+
+cat("Lasso Regression MSE:", round(mean(lasso_results$mse), 1))
+
+## Creating and testing a random forest model using the Boston data
+
+set.seed(1989)
+
+rf_results <- tibble(
+  fold = 1:5,
+  influence = vector("list", 5),
+  mse = NA_real_
+)
+
+for (i in 1:5) {
+  
+  train_indices <- folds[[i]]
+  
+  train <- boston[train_indices, ]
+  test <- boston[-train_indices, ]
+  
+  mod_rf <- randomForest(
+    MEDV ~ .,
+    train,
+    mtry = 3,
+    ntree = 500
+  )
+  
+  dfpred_rf <- data.frame(
+    test,
+    pred = predict(mod_rf, test)
+  )
+  
+  rf_results$influence[[i]] <- as_tibble(importance(mod_rf, type = 2), rownames = "var")
+  rf_results$mse[[i]] <- mean((dfpred_rf$MEDV - dfpred_rf$pred)^2)
+  
+}
+
+rf_results$influence %>% # Average RSS reduction across each node split for each variable
+  bind_rows(.id = "fold") %>%
+  group_by(var) %>%
+  summarize(value = round(mean(IncNodePurity), 1)) %>%
+  pull(var, value)
+
+cat("Random Forest MSE:", round(mean(rf_results$mse), 1))
+
+## Creating and testing a gradient boosted model using Boston data
+
+gbm_results <- tibble(
+  fold = 1:5,
+  influence = vector("list", 5),
+  mse = NA_real_
+)
+
+for (i in 1:5) {
+  
+  train_indices <- folds[[i]]
+  
+  train <- boston[train_indices, ]
+  test <- boston[-train_indices, ]
+  
+  mod_gbm <- gbm(
+    MEDV ~ .,
+    train,
+    distribution = "gaussian",
+    n.trees = 500,
+    shrinkage = 0.01,
+  )
+  
+  dfpred_gbm <- data.frame(
+    test,
+    pred = predict(mod_gbm, test)
+  )
+  
+  gbm_results$influence[[i]] <- as_tibble(summary(mod_gbm, plotit = F))
+  gbm_results$mse[[i]] <- mean((dfpred_rf$MEDV - dfpred_rf$pred)^2)
+  
+}
+
+gbm_results$influence %>% # Average error each variable reduces across each subsequent model fit
+  bind_rows(.id = "fold") %>%
+  group_by(var) %>%
+  summarize(value = round(mean(rel.inf), 1)) %>%
+  pull(var, value)
+
+cat("Gradient Boosted MSE:", round(mean(gbm_results$mse), 1))
+```
+
+
+
